@@ -1,0 +1,63 @@
+{
+    "input_model": {
+        "type": "PyTorchModel",
+        "model_path": "CohereLabs/cohere-transcribe-03-2026",
+        "model_loader": "encoder_model_loader",
+        "model_script": "cpu/cohere_model_load.py",
+        "io_config": {
+            "input_names": ["mel", "mel_length"],
+            "output_names": [
+                "present_key_cross_0", "present_key_cross_1", "present_key_cross_2", "present_key_cross_3",
+                "present_key_cross_4", "present_key_cross_5", "present_key_cross_6", "present_key_cross_7",
+                "present_value_cross_0", "present_value_cross_1", "present_value_cross_2", "present_value_cross_3",
+                "present_value_cross_4", "present_value_cross_5", "present_value_cross_6", "present_value_cross_7"
+            ],
+            "dynamic_axes": {
+                "mel": {"0": "batch", "2": "T_mel"},
+                "mel_length": {"0": "batch"},
+                "present_key_cross_0": {"0": "batch", "2": "T_enc"},
+                "present_key_cross_1": {"0": "batch", "2": "T_enc"},
+                "present_key_cross_2": {"0": "batch", "2": "T_enc"},
+                "present_key_cross_3": {"0": "batch", "2": "T_enc"},
+                "present_key_cross_4": {"0": "batch", "2": "T_enc"},
+                "present_key_cross_5": {"0": "batch", "2": "T_enc"},
+                "present_key_cross_6": {"0": "batch", "2": "T_enc"},
+                "present_key_cross_7": {"0": "batch", "2": "T_enc"},
+                "present_value_cross_0": {"0": "batch", "2": "T_enc"},
+                "present_value_cross_1": {"0": "batch", "2": "T_enc"},
+                "present_value_cross_2": {"0": "batch", "2": "T_enc"},
+                "present_value_cross_3": {"0": "batch", "2": "T_enc"},
+                "present_value_cross_4": {"0": "batch", "2": "T_enc"},
+                "present_value_cross_5": {"0": "batch", "2": "T_enc"},
+                "present_value_cross_6": {"0": "batch", "2": "T_enc"},
+                "present_value_cross_7": {"0": "batch", "2": "T_enc"}
+            }
+        },
+        "dummy_inputs_func": "encoder_dummy_inputs"
+    },
+    "systems": {
+        "local_system": {
+            "type": "LocalSystem",
+            "accelerators": [
+                {
+                    "device": "cpu",
+                    "execution_providers": ["CPUExecutionProvider"]
+                }
+            ]
+        }
+    },
+    "passes": {
+        "convert": {
+            "type": "OnnxConversion",
+            "target_opset": 17,
+            "use_dynamo_exporter": false,
+            "dynamic": true,
+            "save_as_external_data": true,
+            "all_tensors_to_one_file": true,
+            "external_data_name": "encoder.onnx.data"
+        }
+    },
+    "target": "local_system",
+    "output_dir": "build/onnx_models_fp32/encoder.onnx",
+    "no_artifacts": true
+}

@@ -1,0 +1,19 @@
+name: cohere-transcribe-03-2026
+provider: CohereLabs
+model_id: CohereLabs/cohere-transcribe-03-2026
+task: automatic-speech-recognition
+framework: ONNX Runtime
+execution_provider: CPUExecutionProvider
+summary: >
+  CPU recipe for exporting Cohere Transcribe (encoder + decoder) to ONNX in
+  FP32. Encoder uses the dynamo exporter with a custom translation table for
+  ``aten::sym_*`` ops so the mel time axis stays dynamic. Fusion and
+  quantization are intentionally omitted at this stage.
+
+artifacts:
+  - cpu/cohere_encoder_fp32_cpu.json
+  - cpu/cohere_decoder_fp32_cpu.json
+
+scripts:
+  - scripts/optimize.py
+  - scripts/export_cohere_to_onnx.py
