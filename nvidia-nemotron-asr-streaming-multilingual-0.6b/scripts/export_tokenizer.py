@@ -17,6 +17,27 @@ import sys
 from pathlib import Path
 
 
+def _restore_from_hf(model_name: str):
+    """Download the .nemo archive from HuggingFace and restore from it.
+
+    Works around a NeMo 2.6.2 bug in ``ASRModel.from_pretrained`` where the
+    HF cache directory is mistakenly treated as pre-extracted (because the
+    repo also ships README/safety markdown files), causing
+    ``model_config.yaml`` lookup to fail.
+    """
+    import nemo.collections.asr as nemo_asr
+    from huggingface_hub import hf_hub_download, list_repo_files
+
+    files = list_repo_files(model_name)
+    nemo_files = [f for f in files if f.endswith(".nemo")]
+    if not nemo_files:
+        raise RuntimeError(f"No .nemo archive found in HF repo {model_name!r}")
+    if len(nemo_files) > 1:
+        raise RuntimeError(f"Multiple .nemo archives in {model_name!r}: {nemo_files}")
+    nemo_path = hf_hub_download(repo_id=model_name, filename=nemo_files[0])
+    return nemo_asr.models.ASRModel.restore_from(nemo_path)
+
+
 def extract_vocab(model_name: str, output_dir: Path) -> list:
     """Extract vocabulary from NeMo model and save vocab.txt."""
 
@@ -28,10 +49,11 @@ def extract_vocab(model_name: str, output_dir: Path) -> list:
         print("  pip install git+https://github.com/NVIDIA/NeMo.git@main#egg=nemo_toolkit[asr]")
         sys.exit(1)
 
-    if model_name.endswith(".nemo"):
-        asr_model = nemo_asr.models.ASRModel.restore_from(model_name)
-    else:
-        asr_model = nemo_asr.models.ASRModel.from_pretrained(model_name)
+    asr_model = (
+        nemo_asr.models.ASRModel.restore_from(model_name)
+        if model_name.endswith(".nemo")
+        else _restore_from_hf(model_name)
+    )
 
     if not hasattr(asr_model, "tokenizer"):
         print("Error: Model does not have a tokenizer attribute")

@@ -69,7 +69,12 @@ def get_streaming_cache_shapes(encoder, att_context_size, chunk_size=0.56):
     Returns dict with: n_layers, d_model, last_channel_cache_size,
     conv_context, chunk_mel_frames, pre_encode_cache_size
     """
-    n_layers = getattr(encoder, 'num_layers', 24)
+    # Prefer the actual layer count; some checkpoints leave a stale num_layers
+    # attribute from a base model with a different depth.
+    if hasattr(encoder, 'layers'):
+        n_layers = len(encoder.layers)
+    else:
+        n_layers = getattr(encoder, 'num_layers', 24)
     d_model = getattr(encoder, 'd_model', 1024)
 
     # Try to get streaming config from NeMo

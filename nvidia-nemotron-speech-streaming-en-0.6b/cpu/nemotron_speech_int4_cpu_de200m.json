@@ -1,0 +1,56 @@
+{
+  "input_model": {
+    "type": "PyTorchModel",
+    "model_path": "/datadisks/disk2/nebanfic/hf_models/lite-conformer-de-200m/best_model_fixed.nemo",
+    "model_loader": "model_loader",
+    "model_script": "cpu/nemotron_encoder_load_de200m.py",
+    "io_config": {
+      "input_names": [
+        "audio_signal",
+        "length",
+        "cache_last_channel",
+        "cache_last_time",
+        "cache_last_channel_len"
+      ],
+      "output_names": [
+        "outputs",
+        "encoded_lengths",
+        "cache_last_channel_next",
+        "cache_last_time_next",
+        "cache_last_channel_len_next"
+      ]
+    },
+    "dummy_inputs_func": "generate_dummy_inputs"
+  },
+  "systems": {
+    "local_system": {
+      "type": "LocalSystem",
+      "accelerators": [
+        {
+          "device": "cpu",
+          "execution_providers": [
+            "CPUExecutionProvider"
+          ]
+        }
+      ]
+    }
+  },
+  "passes": {
+    "convert": {
+      "type": "OnnxConversion",
+      "target_opset": 21,
+      "dynamic": false,
+      "use_dynamo_exporter": true
+    },
+    "quantization": {
+      "type": "OnnxKQuantQuantization",
+      "block_size": 32,
+      "accuracy_level": 4,
+      "save_as_external_data": true,
+      "external_data_name": "encoder.onnx.data"
+    }
+  },
+  "target": "local_system",
+  "output_dir": "build/de_int4/encoder.onnx",
+  "no_artifacts": true
+}
